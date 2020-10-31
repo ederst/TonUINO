@@ -20,6 +20,12 @@
 // uncomment the below line to enable five button support
 //#define FIVEBUTTONS
 
+// ------------------------------------------------------------------------------------------------                                          
+#define SpkOnOff              // Aus und Einschalten des Lautsprechers über MOSFET's
+                              // zur Unterdrückung des Einschaltgeräusches und 
+                              // Möglichkeit der Abschaltung beim Anschluss eines Kopfhörers
+                              // Hardwareerweiterung erforderlich: (Abschaltung des Lautsprechers über MOS-FET's)
+
 static const uint32_t cardCookie = 322417479;
 
 // DFPlayer Mini
@@ -638,6 +644,10 @@ byte blockAddr = 4;
 byte trailerBlock = 7;
 MFRC522::StatusCode status;
 
+#define NFCgain_max   // Maximale Empfindlichkeit
+//#define NFCgain_avg   // Mittlere Empfindlichkeit
+//#define NFCgain_min   // Minimale Empfindlichkeit 
+
 #define buttonPause A0
 #define buttonUp A1
 #define buttonDown A2
@@ -648,6 +658,11 @@ MFRC522::StatusCode status;
 #ifdef FIVEBUTTONS
 #define buttonFourPin A3
 #define buttonFivePin A4
+#endif
+
+#ifdef SpkOnOff
+  #define SpkOnPin 6                // Lautsprecher Ein
+  bool SpkisOn = false;             // Marker Lautsprecher Ein/Aus
 #endif
 
 #define LONG_PRESS 1000
@@ -740,6 +755,11 @@ void setup() {
   Serial.println(F("created by Thorsten Voß and licensed under GNU/GPL."));
   Serial.println(F("Information and contribution at https://tonuino.de.\n"));
 
+#ifdef SpkOnOff
+  pinMode(SpkOnPin, OUTPUT);  // Ausgang Lautsprecher-Einschaltsignal
+  spkOff();                   // Voreinstellung - Speaker Off
+#endif
+
   // Busy Pin
   pinMode(busyPin, INPUT);
 
@@ -762,6 +782,20 @@ void setup() {
   // NFC Leser initialisieren
   SPI.begin();        // Init SPI bus
   mfrc522.PCD_Init(); // Init MFRC522
+
+#ifdef NFCgain_min
+  mfrc522.PCD_SetAntennaGain(mfrc522.RxGain_min);
+  Serial.println(F("=== mfrc522-> RxGain_min === "));
+#endif
+#ifdef NFCgain_avg
+  mfrc522.PCD_SetAntennaGain(mfrc522.RxGain_avg);
+  Serial.println(F("=== mfrc522-> RxGain_avg === "));
+#endif
+#ifdef NFCgain_max
+  mfrc522.PCD_SetAntennaGain(mfrc522.RxGain_max);
+  Serial.println(F("=== mfrc522-> RxGain_max === "));
+#endif
+  
   mfrc522
   .PCD_DumpVersionToSerial(); // Show details of PCD - MFRC522 Card Reader
   for (byte i = 0; i < 6; i++) {
@@ -778,6 +812,9 @@ void setup() {
   pinMode(shutdownPin, OUTPUT);
   digitalWrite(shutdownPin, LOW);
 
+#ifdef SpkOnOff
+  spkOn();
+#endif 
 
   // RESET --- ALLE DREI KNÖPFE BEIM STARTEN GEDRÜCKT HALTEN -> alle EINSTELLUNGEN werden gelöscht
   if (digitalRead(buttonPause) == LOW && digitalRead(buttonUp) == LOW &&
@@ -1784,7 +1821,30 @@ void writeCard(nfcTagObject nfcTag) {
   delay(2000);
 }
 
+// ************************** Speaker On-Off *****************************************
 
+// **************************Speaker On *******************
+#ifdef SpkOnOff
+void spkOn()
+ {
+  digitalWrite(SpkOnPin, HIGH);     // Lautsprecher über Mosfets Einschalten
+  Serial.println(F("Lautsprecher wird eingeschaltet!"));
+  SpkisOn = true;
+ }
+
+// **************************Speaker Off *******************
+void spkOff() {
+  digitalWrite(SpkOnPin, LOW);     // Lautsprecher über Mosfets Ausschalten
+  Serial.println(F("Lautsprecher wird ausgeschaltet!"));
+  SpkisOn = false;
+}
+
+//void SpkrOnOff() {
+//  SpkOn();                        // Lautsprecher über Mosfets Einschalten
+//}
+#endif
+
+// ************************** END Speaker On-Off **************************************
 
 /**
   Helper routine to dump a byte array as hex values to Serial.
