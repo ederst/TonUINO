@@ -1331,14 +1331,14 @@ void writeCard(nfcTagObject nfcTag) {
 #ifdef SpkOnOff
 void spkOn()
  {
-  digitalWrite(SpkOnPin, HIGH);     // Lautsprecher über Mosfets Einschalten
+  digitalWrite(SpkOnPin, LOW);     // Lautsprecher über Mosfets Einschalten
   Serial.println(F("Lautsprecher wird eingeschaltet!"));
   SpkisOn = true;
  }
 
 // **************************Speaker Off *******************
 void spkOff() {
-  digitalWrite(SpkOnPin, LOW);     // Lautsprecher über Mosfets Ausschalten
+  digitalWrite(SpkOnPin, HIGH);     // Lautsprecher über Mosfets Ausschalten
   Serial.println(F("Lautsprecher wird ausgeschaltet!"));
   SpkisOn = false;
 }
