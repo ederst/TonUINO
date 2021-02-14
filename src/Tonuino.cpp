@@ -139,6 +139,7 @@ static void nextTrack(uint16_t track);
 uint8_t voiceMenu(int numberOfOptions, int startMessage, int messageOffset,
                   bool preview = false, int previewFromFolder = 0, int defaultValue = 0, bool exitWithLongPress = false);
 bool isPlaying();
+void waitForTrackToFinish();
 bool checkTwo ( uint8_t a[], uint8_t b[] );
 void writeCard(nfcTagObject nfcTag);
 void dump_byte_array(byte * buffer, byte bufferSize);
