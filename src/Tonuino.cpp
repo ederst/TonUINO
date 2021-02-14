@@ -623,7 +623,7 @@ class KindergardenMode : public Modifier {
     // this->nextCard.nfcFolderSettings.folder != 0 &&
     // this->nextCard.nfcFolderSettings.mode != 0) { myFolder =
     // &this->nextCard.nfcFolderSettings;
-    if (this->cardQueued == true) {
+    if (this->cardQueued) {
       this->cardQueued = false;
 
       myCard = nextCard;
@@ -734,7 +734,7 @@ class FeedbackModifier : public Modifier {
 static void nextTrack(uint16_t track) {
   Serial.println(track);
   if (activeModifier != NULL)
-    if (activeModifier->handleNext() == true) {
+    if (activeModifier->handleNext()) {
       return;
     }
 
@@ -744,7 +744,7 @@ static void nextTrack(uint16_t track) {
 
   _lastTrackFinished = track;
 
-  if (knownCard == false)
+  if (!knownCard)
     // Wenn eine neue Karte angelernt wird soll das Ende eines Tracks nicht
     // verarbeitet werden
     return;
@@ -885,7 +885,7 @@ void readButtons() {
 }
 
 void volumeUpButton() {
-  if (activeModifier != NULL && activeModifier->handleVolumeUp() == true) {
+  if (activeModifier != NULL && activeModifier->handleVolumeUp()) {
     return;
   }
 
@@ -898,7 +898,7 @@ void volumeUpButton() {
 }
 
 void volumeDownButton() {
-  if (activeModifier != NULL && activeModifier->handleVolumeDown() == true) {
+  if (activeModifier != NULL && activeModifier->handleVolumeDown()) {
     return;
   }
 
@@ -911,7 +911,7 @@ void volumeDownButton() {
 }
 
 void nextButton() {
-  if (activeModifier != NULL && activeModifier->handleNextButton() == true) {
+  if (activeModifier != NULL && activeModifier->handleNextButton()) {
     return;
   }
 
@@ -921,7 +921,7 @@ void nextButton() {
 
 void previousButton() {
   if (activeModifier != NULL &&
-      activeModifier->handlePreviousButton() == true) {
+      activeModifier->handlePreviousButton()) {
     return;
   }
 
@@ -1078,7 +1078,7 @@ void setupCard() {
   mp3.pause();
   Serial.println(F("=== setupCard()"));
   nfcTagObject newCard;
-  if (setupFolder(&newCard.nfcFolderSettings) == true) {
+  if (setupFolder(&newCard.nfcFolderSettings)) {
     // Karte ist konfiguriert -> speichern
     mp3.pause();
     do {
@@ -1198,7 +1198,7 @@ bool readCard(nfcTagObject* nfcTag) {
 
   if (tempCard.cookie == cardCookie) {
     if (activeModifier != NULL && tempCard.nfcFolderSettings.folder != 0) {
-      if (activeModifier->handleRFID(&tempCard) == true) {
+      if (activeModifier->handleRFID(&tempCard)) {
         return false;
       }
     }
@@ -1470,7 +1470,7 @@ void adminMenu(bool fromCard) {
   disablestandbyTimer();
   mp3.pause();
   knownCard = false;
-  if (fromCard == false) {
+  if (!fromCard) {
     // Admin menu has been locked - it still can be trigged via admin card
     if (mySettings.adminMenuLocked == 1) {
       return;
@@ -1478,8 +1478,8 @@ void adminMenu(bool fromCard) {
       // Pin check
       uint8_t pin[4];
       mp3.playMp3FolderTrack(991);
-      if (askCode(pin) == true) {
-        if (checkTwo(pin, mySettings.adminMenuPin) == false) {
+      if (askCode(pin)) {
+        if (!checkTwo(pin, mySettings.adminMenuPin)) {
           return;
         }
       } else {
@@ -1838,11 +1838,11 @@ void loop() {
 
     if (pauseButton.wasReleased()) {
       if (activeModifier != NULL) {
-        if (activeModifier->handlePause() == true) {
+        if (activeModifier->handlePause()) {
           return;
         }
       }
-      if (ignorePauseButton == false) {
+      if (!ignorePauseButton) {
         if (isPlaying()) {
           mp3.pause();
           setstandbyTimer();
@@ -1853,9 +1853,9 @@ void loop() {
       }
       ignorePauseButton = false;
     } else if (pauseButton.pressedFor(LONG_PRESS) &&
-               ignorePauseButton == false) {
+               !ignorePauseButton) {
       if (activeModifier != NULL) {
-        if (activeModifier->handlePause() == true) {
+        if (activeModifier->handlePause()) {
           return;
         }
       }
@@ -1958,7 +1958,7 @@ void loop() {
     return;
   }
 
-  if (readCard(&myCard) == true) {
+  if (readCard(&myCard)) {
     if (myCard.cookie == cardCookie && myCard.nfcFolderSettings.folder != 0 &&
         myCard.nfcFolderSettings.mode != 0) {
       playFolder();
