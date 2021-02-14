@@ -416,12 +416,14 @@ void checkStandbyAtMillis() {
 
     // http://discourse.voss.earth/t/intenso-s10000-powerbank-automatische-abschaltung-software-only/805
     // powerdown to 27mA (powerbank switches off after 30-60s)
-    spkOff();
     mfrc522.PCD_AntennaOff();
     mfrc522.PCD_SoftPowerDown();
     mp3.sleep();
 #ifdef UseStatusLED
     statusLed->sleep();
+#endif
+#ifdef SpkOnOff
+    spkOff();
 #endif
 
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
@@ -1294,12 +1296,16 @@ bool readCard(nfcTagObject* nfcTag) {
 
 #ifdef BeepOnNewCard
     if (!isPlaying()) {
-      // Note(sprietl): Turn speaker on/off to minimize the impact of sound of
-      // last mp3
+#ifdef SpkOnOff
+      // Note(sprietl):
+      //   Turn speaker on/off to minimize the impact of sound of last mp3
       spkOff();
+#endif
       mp3.start();
       delay(100);
+#ifdef SpkOnOff
       spkOn();
+#endif
     }
     mp3.playAdvertisement(BEEP_SOUND);
     delay(BEEP_DELAY);
