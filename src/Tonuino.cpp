@@ -680,8 +680,11 @@ class RepeatSingleModifier : public Modifier {
     Serial.println(
         F("== RepeatSingleModifier::handleNext() -> REPEAT CURRENT TRACK"));
     delay(50);
-    if (isPlaying())
+
+    if (isPlaying()) {
       return true;
+    }
+
     if (myFolder->mode == 3 || myFolder->mode == 9) {
       mp3.playFolderTrack(myFolder->folder, queue[currentTrack - 1]);
     } else {
@@ -882,9 +885,9 @@ void readButtons() {
 }
 
 void volumeUpButton() {
-  if (activeModifier != NULL)
-    if (activeModifier->handleVolumeUp() == true)
-      return;
+  if (activeModifier != NULL && activeModifier->handleVolumeUp() == true) {
+    return;
+  }
 
   Serial.println(F("=== volumeUp()"));
   if (volume < mySettings.maxVolume) {
@@ -895,9 +898,9 @@ void volumeUpButton() {
 }
 
 void volumeDownButton() {
-  if (activeModifier != NULL)
-    if (activeModifier->handleVolumeDown() == true)
-      return;
+  if (activeModifier != NULL && activeModifier->handleVolumeDown() == true) {
+    return;
+  }
 
   Serial.println(F("=== volumeDown()"));
   if (volume > mySettings.minVolume) {
@@ -908,18 +911,19 @@ void volumeDownButton() {
 }
 
 void nextButton() {
-  if (activeModifier != NULL)
-    if (activeModifier->handleNextButton() == true)
-      return;
+  if (activeModifier != NULL && activeModifier->handleNextButton() == true) {
+    return;
+  }
 
   nextTrack(random(65536));
   delay(1000);
 }
 
 void previousButton() {
-  if (activeModifier != NULL)
-    if (activeModifier->handlePreviousButton() == true)
-      return;
+  if (activeModifier != NULL &&
+      activeModifier->handlePreviousButton() == true) {
+    return;
+  }
 
   previousTrack();
   delay(1000);
@@ -933,8 +937,10 @@ uint8_t voiceMenu(int numberOfOptions,
                   int defaultValue,
                   bool exitWithLongPress) {
   uint8_t returnValue = defaultValue;
-  if (startMessage != 0)
+  if (startMessage != 0) {
     mp3.playMp3FolderTrack(startMessage);
+  }
+
   Serial.print(F("=== voiceMenu() ("));
   Serial.print(numberOfOptions);
   Serial.println(F(" Options)"));
@@ -1299,8 +1305,9 @@ void resetCard() {
 
   } while (!mfrc522.PICC_IsNewCardPresent());
 
-  if (!mfrc522.PICC_ReadCardSerial())
+  if (!mfrc522.PICC_ReadCardSerial()) {
     return;
+  }
 
   Serial.print(F("Karte wird neu konfiguriert!"));
   setupCard();
@@ -1439,14 +1446,21 @@ bool askCode(uint8_t* code) {
   uint8_t x = 0;
   while (x < 4) {
     readButtons();
-    if (pauseButton.pressedFor(LONG_PRESS))
+    if (pauseButton.pressedFor(LONG_PRESS)) {
       break;
-    if (pauseButton.wasReleased())
+    }
+
+    if (pauseButton.wasReleased()) {
       code[x++] = 1;
-    if (upButton.wasReleased())
+    }
+
+    if (upButton.wasReleased()) {
       code[x++] = 2;
-    if (downButton.wasReleased())
+    }
+
+    if (downButton.wasReleased()) {
       code[x++] = 3;
+    }
   }
   return true;
 }
@@ -1940,8 +1954,9 @@ void loop() {
 
   // RFID Karte wurde aufgelegt
 
-  if (!mfrc522.PICC_ReadCardSerial())
+  if (!mfrc522.PICC_ReadCardSerial()) {
     return;
+  }
 
   if (readCard(&myCard) == true) {
     if (myCard.cookie == cardCookie && myCard.nfcFolderSettings.folder != 0 &&
