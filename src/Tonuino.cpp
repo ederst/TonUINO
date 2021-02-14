@@ -65,7 +65,9 @@ MFRC522::StatusCode status;
 
 #ifdef SpkOnOff
   #define SpkOnPin 5                // Lautsprecher Ein
-  bool SpkisOn = false;             // Marker Lautsprecher Ein/Aus
+bool isSpkOn = false;             // Marker Lautsprecher Ein/Aus
+void spkOn();
+void spkOff();
 #endif
 
 #define LONG_PRESS 1000
@@ -311,6 +313,7 @@ void checkStandbyAtMillis() {
 
     // http://discourse.voss.earth/t/intenso-s10000-powerbank-automatische-abschaltung-software-only/805
     // powerdown to 27mA (powerbank switches off after 30-60s)
+    spkOff();
     mfrc522.PCD_AntennaOff();
     mfrc522.PCD_SoftPowerDown();
     mp3.sleep();
@@ -1344,28 +1347,27 @@ void writeCard(nfcTagObject nfcTag) {
 }
 
 // ************************** Speaker On-Off *****************************************
-
-// **************************Speaker On *******************
 #ifdef SpkOnOff
-void spkOn()
- {
-  digitalWrite(SpkOnPin, LOW);     // Lautsprecher über Mosfets Einschalten
+// **************************Speaker On *******************
+void spkOn() {
+  if (!isSpkOn) {
   Serial.println(F("Lautsprecher wird eingeschaltet!"));
-  SpkisOn = true;
+    digitalWrite(SpkOnPin, LOW);
+    isSpkOn = true;
+    // Wait a tiny bit for the Amp to start up
+    // delay(100);
  }
+}
 
 // **************************Speaker Off *******************
 void spkOff() {
-  digitalWrite(SpkOnPin, HIGH);     // Lautsprecher über Mosfets Ausschalten
+  if (isSpkOn) {
   Serial.println(F("Lautsprecher wird ausgeschaltet!"));
-  SpkisOn = false;
+    digitalWrite(SpkOnPin, HIGH);
+    isSpkOn = false;
 }
-
-//void SpkrOnOff() {
-//  SpkOn();                        // Lautsprecher über Mosfets Einschalten
-//}
+}
 #endif
-
 // ************************** END Speaker On-Off **************************************
 
 /**
@@ -1622,6 +1624,10 @@ void adminMenu(bool fromCard) {
 
 void setup() {
 
+#ifdef SpkOnOff
+  pinMode(SpkOnPin, OUTPUT);  // Ausgang Lautsprecher-Einschaltsignal
+  spkOff();                   // Voreinstellung - Speaker Off
+#endif
   Serial.begin(115200); // Es gibt ein paar Debug Ausgaben über die serielle Schnittstelle
 
   // Wert für randomSeed() erzeugen durch das mehrfache Sammeln von rauschenden LSBs eines offenen Analogeingangs
@@ -1713,6 +1719,9 @@ void setup() {
     loadSettingsFromFlash();
   }
 
+#ifdef SpkOnOff
+  spkOn();
+#endif 
 
   // Start Shortcut "at Startup" - e.g. Welcome Sound
   playShortCut(3);
