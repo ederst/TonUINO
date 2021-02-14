@@ -30,6 +30,8 @@
 
 #define BeepOnNewCard
 
+#define UseStatusLED
+
 #ifdef BeepOnNewCard
 #define BEEP_DELAY 1000
 #define BEEP_SOUND 400
@@ -155,6 +157,86 @@ void writeCard(nfcTagObject nfcTag);
 void dump_byte_array(byte* buffer, byte bufferSize);
 void adminMenu(bool fromCard = false);
 bool knownCard = false;
+
+#ifdef UseStatusLED
+#define STATUS_LED_BLUE A3
+#define STATUS_LED_GREEN A4
+#define STATUS_LED_RED A5
+
+#define ANALOG_LOW 0
+#define ANALOG_HIGH 1024
+
+class StatusLED {
+ private:
+  uint8_t redPin;
+  uint8_t greenPin;
+  uint8_t bluePin;
+
+  byte currentRed = 0;
+  byte currentGreen = 0;
+  byte currentBlue = 0;
+
+  bool isSleeping = false;
+
+  int mapColor(byte color) {
+    return map(color, LOW, HIGH, ANALOG_LOW, ANALOG_HIGH);
+  }
+
+  void showColor(byte red, byte green, byte blue) {
+    if (this->currentRed != red) {
+      analogWrite(this->redPin, mapColor(red));
+      this->currentRed = red;
+    }
+    if (this->currentGreen != green) {
+      analogWrite(this->greenPin, mapColor(green));
+      this->currentGreen = green;
+    }
+    if (currentBlue != blue) {
+      analogWrite(this->bluePin, mapColor(blue));
+      this->currentBlue = blue;
+    }
+  }
+
+ public:
+  StatusLED(uint8_t redPin, uint8_t greenPin, uint8_t bluePin) {
+    this->redPin = STATUS_LED_RED;
+    this->greenPin = STATUS_LED_GREEN;
+    this->bluePin = STATUS_LED_BLUE;
+    this->isSleeping = false;
+  }
+
+  void setup() {
+    pinMode(this->redPin, OUTPUT);
+    pinMode(this->bluePin, OUTPUT);
+    pinMode(this->greenPin, OUTPUT);
+    this->isSleeping = false;
+    this->showColor(HIGH, 0, 0);
+  }
+
+  void sleep() {
+    this->isSleeping = true;
+    this->showColor(0, 0, 0);
+  }
+
+  void newCard() { this->showColor(0, HIGH, HIGH); }
+
+  void adminMenu() { this->showColor(HIGH, HIGH, 0); }
+
+  void setupCard() { this->showColor(HIGH, 0, HIGH); }
+
+  void loop() {
+    if (!this->isSleeping && !ignorePauseButton) {
+      if (isPlaying()) {
+        this->showColor(0, HIGH, 0);
+      } else {
+        this->showColor(0, 0, HIGH);
+      }
+    }
+  }
+};
+
+StatusLED* statusLed = NULL;
+#endif
 
 // implement a notification class,
 // its member methods will get called
@@ -338,6 +420,9 @@ void checkStandbyAtMillis() {
     mfrc522.PCD_AntennaOff();
     mfrc522.PCD_SoftPowerDown();
     mp3.sleep();
+#ifdef UseStatusLED
+    statusLed->sleep();
+#endif
 
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
     cli();  // Disable interrupts
@@ -1203,6 +1288,10 @@ bool readCard(nfcTagObject* nfcTag) {
       }
     }
 
+#ifdef UseStatusLED
+    statusLed->newCard();
+#endif
+
 #ifdef BeepOnNewCard
     if (!isPlaying()) {
       // Note(sprietl): Turn speaker on/off to minimize the impact of sound of
@@ -1467,6 +1556,9 @@ bool askCode(uint8_t* code) {
 
 void adminMenu(bool fromCard) {
   Serial.println(F("=== adminMenu()"));
+#ifdef UseStatusLED
+  statusLed->adminMenu();
+#endif
   disablestandbyTimer();
   mp3.pause();
   knownCard = false;
@@ -1708,6 +1800,11 @@ void setup() {
   spkOff();                   // Voreinstellung - Speaker Off
 #endif
 
+#ifdef UseStatusLED
+  statusLed = new StatusLED(STATUS_LED_RED, STATUS_LED_GREEN, STATUS_LED_BLUE);
+  statusLed->setup();
+#endif
+
   // Busy Pin
   pinMode(busyPin, INPUT);
 
@@ -1810,6 +1907,10 @@ void loop() {
   do {
     checkStandbyAtMillis();
     mp3.loop();
+
+#ifdef UseStatusLED
+    statusLed->loop();
+#endif
 
     // Modifier : WIP!
     if (activeModifier != NULL) {
@@ -1966,6 +2067,9 @@ void loop() {
 
     // Neue Karte konfigurieren
     else if (myCard.cookie != cardCookie) {
+#ifdef UseStatusLED
+      statusLed->setupCard();
+#endif      
       knownCard = false;
       mp3.playMp3FolderTrack(300);
       waitForTrackToFinish();
