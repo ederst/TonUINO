@@ -1621,11 +1621,13 @@ void setup() {
   pinMode(SpkOnPin, OUTPUT);  // Ausgang Lautsprecher-Einschaltsignal
   spkOff();                   // Voreinstellung - Speaker Off
 #endif
+
   // Busy Pin
   pinMode(busyPin, INPUT);
 
   // DFPlayer Mini initialisieren  
   mp3.begin();
+
   Serial.begin(115200); // Es gibt ein paar Debug Ausgaben über die serielle Schnittstelle
 
   // Wert für randomSeed() erzeugen durch das mehrfache Sammeln von rauschenden LSBs eines offenen Analogeingangs
@@ -1645,10 +1647,6 @@ void setup() {
   Serial.println(F("TonUINO Version 2.1"));
   Serial.println(F("created by Thorsten Voß and licensed under GNU/GPL."));
   Serial.println(F("Information and contribution at https://tonuino.de.\n"));
-
-
-  // Busy Pin
-  pinMode(busyPin, INPUT);
 
   // load Settings from EEPROM
   loadSettingsFromFlash();
