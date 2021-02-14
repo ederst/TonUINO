@@ -679,33 +679,32 @@ class RepeatSingleModifier: public Modifier {
 // This simple FeedbackModifier will tell the volume before changing it and
 // give some feedback once a RFID card is detected.
 class FeedbackModifier: public Modifier {
+  private:
+    bool advertVolume(uint8_t volume) {
+      if (isPlaying()) {
+        mp3.playAdvertisement(volume);
+        delay(500);
+      } 
+      
+      return false;
+    }
   public:
     virtual bool handleVolumeDown() {
+      Serial.println(F("== FeedbackModifier::handleVolumeDown()"));
       if (volume > mySettings.minVolume) {
-        mp3.playAdvertisement(volume - 1);
+        return advertVolume(volume - 1);
       }
-      else {
-        mp3.playAdvertisement(volume);
+      return advertVolume(volume);
       }
-      delay(500);
-      Serial.println(F("== FeedbackModifier::handleVolumeDown()!"));
-      return false;
-    }
+    
     virtual bool handleVolumeUp() {
+      Serial.println(F("== FeedbackModifier::handleVolumeUp()"));
       if (volume < mySettings.maxVolume) {
-        mp3.playAdvertisement(volume + 1);
+        return advertVolume(volume + 1);
       }
-      else {
-        mp3.playAdvertisement(volume);
+      return advertVolume(volume);
       }
-      delay(500);
-      Serial.println(F("== FeedbackModifier::handleVolumeUp()!"));
-      return false;
-    }
-    virtual bool handleRFID(nfcTagObject *newCard) {
-      Serial.println(F("== FeedbackModifier::handleRFID()"));
-      return false;
-    }
+
 };
 
 // Leider kann das Modul selbst keine Queue abspielen, daher müssen wir selbst die Queue verwalten
