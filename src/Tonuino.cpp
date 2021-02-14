@@ -27,6 +27,13 @@
                               // Möglichkeit der Abschaltung beim Anschluss eines Kopfhörers
                               // Hardwareerweiterung erforderlich: (Abschaltung des Lautsprechers über MOS-FET's)
 
+#define BeepOnNewCard
+
+#ifdef BeepOnNewCard
+#define BEEP_DELAY 1000
+#define BEEP_SOUND 400
+#endif
+
 static const uint32_t cardCookie = 322417479;
 
 // MFRC522
@@ -1156,6 +1163,17 @@ bool readCard(nfcTagObject * nfcTag) {
       }
     }
 
+#ifdef BeepOnNewCard
+    if (!isPlaying()) {
+      // Note(sprietl): Turn speaker on/off to minimize the impact of sound of last mp3
+      spkOff();
+      mp3.start();
+      delay(100);
+      spkOn();
+    }
+    mp3.playAdvertisement(BEEP_SOUND);
+    delay(BEEP_DELAY);
+#endif    
     if (tempCard.nfcFolderSettings.folder == 0) {
       if (activeModifier != NULL) {
         if (activeModifier->getActive() == tempCard.nfcFolderSettings.mode) {
