@@ -1007,8 +1007,7 @@ void nextButton() {
 }
 
 void previousButton() {
-  if (activeModifier != NULL &&
-      activeModifier->handlePreviousButton()) {
+  if (activeModifier != NULL && activeModifier->handlePreviousButton()) {
     return;
   }
 
@@ -1959,8 +1958,7 @@ void loop() {
         }
       }
       ignorePauseButton = false;
-    } else if (pauseButton.pressedFor(LONG_PRESS) &&
-               !ignorePauseButton) {
+    } else if (pauseButton.pressedFor(LONG_PRESS) && !ignorePauseButton) {
       if (activeModifier != NULL) {
         if (activeModifier->handlePause()) {
           return;
@@ -2075,7 +2073,7 @@ void loop() {
     else if (myCard.cookie != cardCookie) {
 #ifdef UseStatusLED
       statusLed->setupCard();
-#endif      
+#endif
       knownCard = false;
       mp3.playMp3FolderTrack(300);
       waitForTrackToFinish();
