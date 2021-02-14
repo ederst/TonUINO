@@ -1646,10 +1646,6 @@ void setup() {
   Serial.println(F("created by Thorsten Voß and licensed under GNU/GPL."));
   Serial.println(F("Information and contribution at https://tonuino.de.\n"));
 
-#ifdef SpkOnOff
-  pinMode(SpkOnPin, OUTPUT);  // Ausgang Lautsprecher-Einschaltsignal
-  spkOff();                   // Voreinstellung - Speaker Off
-#endif
 
   // Busy Pin
   pinMode(busyPin, INPUT);
@@ -1700,10 +1696,6 @@ void setup() {
 #endif
   pinMode(shutdownPin, OUTPUT);
   digitalWrite(shutdownPin, LOW);
-
-#ifdef SpkOnOff
-  spkOn();
-#endif 
 
   // RESET --- ALLE DREI KNÖPFE BEIM STARTEN GEDRÜCKT HALTEN -> alle EINSTELLUNGEN werden gelöscht
   if (digitalRead(buttonPause) == LOW && digitalRead(buttonUp) == LOW &&
