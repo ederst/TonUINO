@@ -1621,6 +1621,11 @@ void setup() {
   pinMode(SpkOnPin, OUTPUT);  // Ausgang Lautsprecher-Einschaltsignal
   spkOff();                   // Voreinstellung - Speaker Off
 #endif
+  // Busy Pin
+  pinMode(busyPin, INPUT);
+
+  // DFPlayer Mini initialisieren  
+  mp3.begin();
   Serial.begin(115200); // Es gibt ein paar Debug Ausgaben über die serielle Schnittstelle
 
   // Wert für randomSeed() erzeugen durch das mehrfache Sammeln von rauschenden LSBs eines offenen Analogeingangs
@@ -1655,10 +1660,8 @@ void setup() {
   // activate standby timer
   setstandbyTimer();
 
-  // DFPlayer Mini initialisieren
-  mp3.begin();
   // Zwei Sekunden warten bis der DFPlayer Mini initialisiert ist
-  delay(2000);
+  // delay(2000);
   volume = mySettings.initVolume;
   mp3.setVolume(volume);
   mp3.setEq(static_cast<DfMp3_Eq>(mySettings.eq - 1));
