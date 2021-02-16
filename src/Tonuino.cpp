@@ -163,11 +163,15 @@ bool knownCard = false;
 #define STATUS_LED_GREEN A4
 #define STATUS_LED_RED A5
 
-#define ANALOG_LOW 0
-#define ANALOG_HIGH 1024
-
 class StatusLED {
  private:
+  enum BlockMode {
+    NONE,
+    UNTIL_PLAYING,
+    UNTIL_PAUSE,
+    AFTER_N_CHANGES
+  };
+
   uint8_t redPin;
   uint8_t greenPin;
   uint8_t bluePin;
@@ -176,23 +180,24 @@ class StatusLED {
   byte currentGreen = 0;
   byte currentBlue = 0;
 
-  bool isSleeping = false;
+  byte changes = 0;
 
-  int mapColor(byte color) {
-    return map(color, LOW, HIGH, ANALOG_LOW, ANALOG_HIGH);
-  }
+  bool isSleeping = false;
+  bool previouslyPlaying = false;
+
+  BlockMode blockMode = UNTIL_PAUSE;
 
   void showColor(byte red, byte green, byte blue) {
     if (this->currentRed != red) {
-      analogWrite(this->redPin, mapColor(red));
+      digitalWrite(this->redPin, red);
       this->currentRed = red;
     }
     if (this->currentGreen != green) {
-      analogWrite(this->greenPin, mapColor(green));
+      digitalWrite(this->greenPin, green);
       this->currentGreen = green;
     }
     if (currentBlue != blue) {
-      analogWrite(this->bluePin, mapColor(blue));
+      digitalWrite(this->bluePin, blue);
       this->currentBlue = blue;
     }
   }
@@ -210,28 +215,59 @@ class StatusLED {
     pinMode(this->bluePin, OUTPUT);
     pinMode(this->greenPin, OUTPUT);
     this->isSleeping = false;
-    this->showColor(HIGH, 0, 0);
+    this->showColor(HIGH, LOW, LOW);
   }
 
   void sleep() {
     this->isSleeping = true;
-    this->showColor(0, 0, 0);
+    this->showColor(LOW, LOW, LOW);
   }
 
-  void newCard() { this->showColor(0, HIGH, HIGH); }
+  void newCard() { 
+    this->showColor(LOW, HIGH, HIGH);
+    this->blockMode = UNTIL_PLAYING;
+  }
 
-  void adminMenu() { this->showColor(HIGH, HIGH, 0); }
+  void adminMenu() { 
+    this->showColor(HIGH, HIGH, LOW);
+    this->blockMode = UNTIL_PAUSE;
+  }
 
-  void setupCard() { this->showColor(HIGH, 0, HIGH); }
+  void setupCard() { 
+    this->showColor(HIGH, LOW, HIGH);
+    this->blockMode = UNTIL_PAUSE;
+  }
+
+  void advertTrack() {
+    this->showColor(HIGH, LOW, LOW);
+    this->blockMode = AFTER_N_CHANGES;
+    this->changes = 3;
+  }
 
   void loop() {
-    if (!this->isSleeping && !ignorePauseButton) {
-      if (isPlaying()) {
-        this->showColor(0, HIGH, 0);
-      } else {
-        this->showColor(0, 0, HIGH);
+    bool currentlyPlaying = isPlaying();
+    if (!this->isSleeping) {
+      if (this->blockMode == NONE) {
+        if (currentlyPlaying) {
+          this->showColor(LOW, HIGH, LOW);
+        } else {
+          this->showColor(LOW, LOW, HIGH);
+        }
+      } else if (this->blockMode == AFTER_N_CHANGES) {
+        if (currentlyPlaying != previouslyPlaying) {
+          if (this->changes == 0) {
+            this->blockMode = NONE;
+          } else {
+            this->changes--;
+          }
+        }
+      } else if (currentlyPlaying && this->blockMode == UNTIL_PLAYING) {
+        this->blockMode = NONE;
+      } else if  (!currentlyPlaying && this->blockMode == UNTIL_PAUSE) {
+        this->blockMode = NONE;
       }
     }
+    this->previouslyPlaying = currentlyPlaying;
   }
 };
 
@@ -1976,6 +2012,9 @@ void loop() {
         if (myFolder->mode == 8 || myFolder->mode == 9) {
           advertTrack = advertTrack - myFolder->special + 1;
         }
+#ifdef UseStatusLED
+        statusLed->advertTrack();
+#endif        
         mp3.playAdvertisement(advertTrack);
       } else {
         playShortCut(0);
