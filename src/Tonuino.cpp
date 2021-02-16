@@ -1318,13 +1318,6 @@ bool readCard(nfcTagObject* nfcTag) {
   tempCard.nfcFolderSettings.special = buffer[7];
   tempCard.nfcFolderSettings.special2 = buffer[8];
 
-  if (tempCard.cookie == cardCookie) {
-    if (activeModifier != NULL && tempCard.nfcFolderSettings.folder != 0) {
-      if (activeModifier->handleRFID(&tempCard)) {
-        return false;
-      }
-    }
-
 #ifdef UseStatusLED
     statusLed->newCard();
 #endif
@@ -1345,6 +1338,13 @@ bool readCard(nfcTagObject* nfcTag) {
     mp3.playAdvertisement(BEEP_SOUND);
     delay(BEEP_DELAY);
 #endif
+
+  if (tempCard.cookie == cardCookie) {
+    if (activeModifier != NULL && tempCard.nfcFolderSettings.folder != 0) {
+      if (activeModifier->handleRFID(&tempCard)) {
+        return false;
+      }
+    }
 
     if (tempCard.nfcFolderSettings.folder == 0) {
       if (activeModifier != NULL) {
