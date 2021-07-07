@@ -29,3 +29,10 @@ Temporary Items
 
 # TonUINO
 /tools/*.pyc
+
+# PIO/VSCode
+.pio/
+.vscode/
+
+*/sd-card/01
+*/sd-card/02
